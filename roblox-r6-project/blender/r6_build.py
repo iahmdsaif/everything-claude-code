@@ -415,7 +415,7 @@ ANIMS = [
          bake=1, source=climb, stride=9.0),
     dict(name="Sit", frames=240, loop=True, step=20, handles="AUTO", priority="Core",
          bake=2, source=sit),
-    dict(name="ToolHold", frames=240, loop=True, step=20, handles="AUTO", priority="Idle",
+    dict(name="ToolHold", frames=240, loop=True, step=20, handles="AUTO", priority="Movement",
          bake=2, source=tool_hold, joints=["Right Arm"]),
 ]
 

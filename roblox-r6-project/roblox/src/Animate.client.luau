@@ -67,7 +67,8 @@ for _, name in BASE do
 	velocities[name] = 0
 end
 local landTrack = loadTrack("Land", Enum.AnimationPriority.Idle, false)
-local toolTrack = loadTrack("ToolHold", Enum.AnimationPriority.Idle, true)
+-- Movement priority: above the landing squash, below a game's own Action anims.
+local toolTrack = loadTrack("ToolHold", Enum.AnimationPriority.Movement, true)
 
 weights.Idle = 1
 for name, track in tracks do

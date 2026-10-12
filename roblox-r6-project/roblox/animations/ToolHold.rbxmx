@@ -3,7 +3,7 @@
 		<Properties>
 			<bool name="Loop">true</bool>
 			<string name="Name">ToolHold</string>
-			<token name="Priority">0</token>
+			<token name="Priority">1</token>
 		</Properties>
 		<Item class="Keyframe" referent="RBX00000002">
 			<Properties>
