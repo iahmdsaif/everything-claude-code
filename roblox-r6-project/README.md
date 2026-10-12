@@ -140,6 +140,33 @@ blender -b DEADAIR_Trailer.blend --python deadair_trailer.py -- --render frames/
 
 Needs Python 3 with `numpy` and `Pillow`, plus `ffmpeg`.
 
+### The trailer inside Roblox Studio
+
+`trailer/DEADAIR_Trailer.rbxl` is a separate Studio project just for the trailer.
+It has the same town as the Blender version, built from Roblox parts: street, buildings
+with lit windows, street lamps, the dock, and the radio tower with a blinking beacon.
+It also has night fog, the actor with a working flashlight, and a director script.
+
+1. Open `trailer/DEADAIR_Trailer.rbxl` in Roblox Studio and press **Play**.
+2. The trailer plays by itself: the same shots and camera moves as the video, the
+   animations, lamps flickering and dying, captions, glitches and the title. Press **R** to replay.
+3. Record it with Studio's built-in recorder or any screen recorder to get a "made in
+   Roblox" version of the trailer.
+
+**Sound:** Roblox can only play uploaded audio. Upload `trailer/DEADAIR_Trailer_audio.mp3`
+(Creator Hub -> Development Items -> Audio), then paste its id into
+`SoundService -> TrailerAudio -> SoundId` (as `rbxassetid://123...`).
+
+**Change the words:** edit `TEXT` at the top of
+`StarterPlayer -> StarterPlayerScripts -> TrailerDirector`.
+
+**Walk around the map yourself:** turn on `Players -> CharacterAutoLoads` and disable the
+`TrailerDirector` script.
+
+The shots are baked from the Blender trailer by `trailer/export_roblox_trailer.py`,
+and the place is built by `trailer/roblox/build_trailer_place.luau`
+(`cd trailer/roblox && lune run build_trailer_place.luau`).
+
 ## Settings you can tweak
 
 Everything is in `ReplicatedStorage -> R6AnimPack -> Config`: walk/run blend

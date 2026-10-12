@@ -12,6 +12,7 @@
 
 local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
+local R6 = require("./lib/R6")
 
 local Instance = roblox.Instance
 local CFrame = roblox.CFrame
@@ -19,96 +20,17 @@ local Vector3 = roblox.Vector3
 local Color3 = roblox.Color3
 local Enum = roblox.Enum
 
-local ORDER = { "Idle", "IdleLook", "Walk", "Run", "Jump", "Fall", "Land", "Climb", "Sit", "ToolHold" }
+local ORDER = R6.ORDER
 local ONE_SHOT = { Jump = true, Land = true }
-
-local function new(className: string, props: { [string]: any }, parent: any?)
-	local inst = Instance.new(className)
-	for key, value in props do
-		inst[key] = value
-	end
-	if parent then
-		inst.Parent = parent
-	end
-	return inst
-end
+local new = R6.new
+local makeR6 = R6.makeRig
 
 local function script(className: string, name: string, path: string, parent: any)
 	return new(className, { Name = name, Source = fs.readFile(path) }, parent)
 end
 
-local function loadAnimations()
-	local list = {}
-	for _, name in ORDER do
-		local path = "animations/" .. name .. ".rbxmx"
-		assert(fs.isFile(path), "missing " .. path .. " - run the Blender exporter first")
-		local sequence = roblox.deserializeModel(fs.readFile(path))[1]
-		assert(sequence.ClassName == "KeyframeSequence", path .. " is not a KeyframeSequence")
-		table.insert(list, sequence)
-	end
-	return list
-end
-
-local function buildPack(animations)
-	local pack = script("ModuleScript", "R6AnimPack", "src/R6AnimPack/init.luau", nil)
-	script("ModuleScript", "Config", "src/R6AnimPack/Config.luau", pack)
-	local folder = new("Folder", { Name = "Animations" }, pack)
-	for _, sequence in animations do
-		sequence.Parent = folder
-	end
-	return pack
-end
-
--- A standard R6 character with Roblox's exact part sizes and Motor6D frames.
-local YELLOW = Color3.fromRGB(245, 205, 48)
-local BLUE = Color3.fromRGB(13, 105, 172)
-local GREEN = Color3.fromRGB(164, 189, 71)
-
-local function makeR6(name: string, at: any)
-	local model = new("Model", { Name = name })
-	local function part(partName, size, offset, color)
-		return new("Part", {
-			Name = partName,
-			Size = size,
-			CFrame = at * offset,
-			Color = color,
-			TopSurface = Enum.SurfaceType.Smooth,
-			BottomSurface = Enum.SurfaceType.Smooth,
-			CanCollide = false,
-		}, model)
-	end
-	local root = part("HumanoidRootPart", Vector3.new(2, 2, 1), CFrame.new(), BLUE)
-	root.Transparency = 1
-	root.Anchored = true
-	local torso = part("Torso", Vector3.new(2, 2, 1), CFrame.new(), BLUE)
-	local head = part("Head", Vector3.new(2, 1, 1), CFrame.new(0, 1.5, 0), YELLOW)
-	local rightArm = part("Right Arm", Vector3.new(1, 2, 1), CFrame.new(1.5, 0, 0), YELLOW)
-	local leftArm = part("Left Arm", Vector3.new(1, 2, 1), CFrame.new(-1.5, 0, 0), YELLOW)
-	local rightLeg = part("Right Leg", Vector3.new(1, 2, 1), CFrame.new(0.5, -2, 0), GREEN)
-	local leftLeg = part("Left Leg", Vector3.new(1, 2, 1), CFrame.new(-0.5, -2, 0), GREEN)
-	new("SpecialMesh", { MeshType = Enum.MeshType.Head, Scale = Vector3.new(1.25, 1.25, 1.25) }, head)
-	new("Decal", { Name = "face", Texture = "rbxasset://textures/face.png", Face = Enum.NormalId.Front }, head)
-
-	local function motor(motorName, parent, part0, part1, c0, c1)
-		new("Motor6D", { Name = motorName, Part0 = part0, Part1 = part1, C0 = c0, C1 = c1, MaxVelocity = 0.1 }, parent)
-	end
-	local up = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0)
-	motor("RootJoint", root, root, torso, up, up)
-	motor("Neck", torso, torso, head,
-		CFrame.new(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0), CFrame.new(0, -0.5, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0))
-	motor("Right Shoulder", torso, torso, rightArm,
-		CFrame.new(1, 0.5, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0), CFrame.new(-0.5, 0.5, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0))
-	motor("Left Shoulder", torso, torso, leftArm,
-		CFrame.new(-1, 0.5, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0), CFrame.new(0.5, 0.5, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0))
-	motor("Right Hip", torso, torso, rightLeg,
-		CFrame.new(1, -1, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0), CFrame.new(0.5, 1, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0))
-	motor("Left Hip", torso, torso, leftLeg,
-		CFrame.new(-1, -1, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0), CFrame.new(-0.5, 1, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0))
-
-	local humanoid = new("Humanoid", { RigType = Enum.HumanoidRigType.R6 }, model)
-	new("Animator", {}, humanoid)
-	model.PrimaryPart = root
-	return model
+local function buildPack()
+	return R6.buildPack(".")
 end
 
 local function block(name, size, position, color, parent, className: string?)
@@ -123,7 +45,7 @@ local function block(name, size, position, color, parent, className: string?)
 	}, parent)
 end
 
-local function buildPlace(animations)
+local function buildPlace()
 	local game = Instance.new("DataModel")
 	local workspace = game:GetService("Workspace")
 	local replicated = game:GetService("ReplicatedStorage")
@@ -143,7 +65,7 @@ local function buildPlace(animations)
 	script("LocalScript", "Animate", "src/Animate.client.luau", characterScripts)
 	script("LocalScript", "Gallery", "src/Gallery.client.luau", playerScripts)
 
-	buildPack(animations).Parent = replicated
+	buildPack().Parent = replicated
 
 	-- World ----------------------------------------------------------------
 	block("Baseplate", Vector3.new(512, 20, 512), Vector3.new(0, -10, 0), Color3.fromRGB(91, 93, 105), workspace).Locked = true
@@ -196,16 +118,15 @@ local function buildPlace(animations)
 	return game
 end
 
-local animations = loadAnimations()
-local place = buildPlace(animations)
+local place = buildPlace()
 fs.writeFile("R6AnimPack.rbxl", roblox.serializePlace(place))
 
 -- Install files for adding the pack to an existing game.
 fs.writeDir("install")
-fs.writeFile("install/R6AnimPack.rbxm", roblox.serializeModel({ buildPack(loadAnimations()) }))
+fs.writeFile("install/R6AnimPack.rbxm", roblox.serializeModel({ buildPack() }))
 local animate = Instance.new("LocalScript")
 animate.Name = "Animate"
 animate.Source = fs.readFile("src/Animate.client.luau")
 fs.writeFile("install/Animate.rbxm", roblox.serializeModel({ animate }))
 
-print(("Built R6AnimPack.rbxl and install/ with %d animations"):format(#animations))
+print(("Built R6AnimPack.rbxl and install/ with %d animations"):format(#ORDER))
