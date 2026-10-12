@@ -1,0 +1,5 @@
+# Blender backups and local exports
+*.blend1
+*.blend2
+blender/roblox_export/
+preview_frames/
