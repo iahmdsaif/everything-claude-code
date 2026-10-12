@@ -14,6 +14,9 @@ it does not touch any other trailer or game folders.
 | `blender/r6_build.py` | Rebuilds the rig and every animation from scratch. |
 | `blender/r6_export_roblox.py` | Exports your (edited) Blender animations to Roblox files. |
 | `blender/render_preview.py` | Renders a 60 fps preview reel of the animations (optional). |
+| `blender/render_actions_preview.py` | Fast 60 fps preview of a single animation (Walk, Run, GetUp, PickUp, ...). |
+| `preview/R6_New_Animations_Preview.mp4` | 60 fps preview of Walk, Run, Get Up and Pick Up. |
+| `siren-hollow/` | The Siren Hollow trailer edit (video + the script that made it). |
 | `roblox/R6AnimPack.rbxl` | **Open in Roblox Studio** - test place with everything set up. |
 | `roblox/install/` | Two files to drop into your own game. |
 | `roblox/animations/` | The animations as Roblox KeyframeSequences (`.rbxmx`). |
@@ -34,6 +37,8 @@ it does not touch any other trailer or game folders.
 | Climb | yes | Hand-over-hand, opposite leg steps |
 | Sit | yes | Seated with breathing |
 | ToolHold | yes | Right arm out (only the arm, so you can walk with it) |
+| GetUp | no | From lying on the back: sit up, crouch, lunge, stand (2.5 s, ends in idle) |
+| PickUp | no | Look down, drop into a low lunge, grab from the floor with the right hand, look at it (2.7 s) |
 
 ## 1. Try it in Roblox Studio (2 minutes)
 
@@ -106,6 +111,34 @@ tab. It only replaces the `R6 AnimPack` collection and the `R6_*` actions.
   springs, so changes ease in and out and the total weight always stays at 100%.
   Walk and run play phase-locked and speed up or slow down with your real ground
   speed, so feet don't skate.
+
+### Playing Get Up and Pick Up
+
+They're one-shot "Action" animations, so play them from your own scripts:
+
+```lua
+local pack = require(game.ReplicatedStorage.R6AnimPack)
+local animator = character.Humanoid:FindFirstChildOfClass("Animator")
+local pickUp = animator:LoadAnimation(pack.getAnimation("PickUp"))
+pickUp:Play(0.15)
+```
+
+Get Up starts lying on the ground, so play it after a ragdoll or knockdown.
+
+## Trailer: Siren Hollow edit
+
+`siren-hollow/Siren_Hollow_Trailer.mp4` is a 67-second trailer cut from the game's
+cutscene recording. The edit crops away the Studio window, keeps the pace slow, and adds a cold
+grade, slow push-ins and a freeze on the creature reveal. On top of that come
+glitchy "decoding" text, static cuts and a sound design built on distant air-raid sirens.
+The recording's own footsteps and siren stay underneath, with its high whine filtered out.
+
+To re-cut it with different words, edit `LINES`, `TITLE` and `SUBTITLE` at the
+top of `siren-hollow/siren_hollow_edit.py`, then run:
+
+```bash
+python3 siren_hollow_edit.py recording.mkv Siren_Hollow_Trailer.mp4
+```
 
 ## Trailer: DEADAIR teaser
 
