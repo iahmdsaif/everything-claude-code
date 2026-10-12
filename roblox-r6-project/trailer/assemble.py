@@ -46,7 +46,8 @@ rng = np.random.default_rng(11)
 
 yy, xx = np.mgrid[0:H, 0:W]
 VIGNETTE = (1.0 - 0.55 * (((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2) ** 1.4).clip(0.25, 1)[..., None]
-GRAIN = [rng.normal(0, 1, (H, W, 1)).astype(np.float32) for _ in range(6)]
+# Film grain at half resolution: looks like grain, but keeps the video small.
+GRAIN = [rng.normal(0, 1, (H // 2, W // 2, 1)).astype(np.float32).repeat(2, 0).repeat(2, 1) for _ in range(6)]
 SCAN = (1.0 - 0.18 * (np.arange(H) % 3 == 0))[:, None, None]
 
 
@@ -190,7 +191,7 @@ def glitch_frame(t, frames_dir, a, b, flash=None):
     return img
 
 
-def finish(img, n, letterbox=True, grain=0.035):
+def finish(img, n, letterbox=True, grain=0.022):
     img = img * VIGNETTE + GRAIN[n % len(GRAIN)] * grain
     if letterbox:
         img[:BAR] = 0
@@ -243,8 +244,8 @@ def main():
     frames_dir, audio, out = sys.argv[1:4]
     total = int(round(LENGTH * FPS))
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-i", audio, "-c:v", "libx264", "-preset", "slow", "-crf", "16",
-           "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out]
+           "-r", str(FPS), "-i", "-", "-i", audio, "-c:v", "libx264", "-preset", "slow", "-crf", "19",
+           "-pix_fmt", "yuv420p", "-maxrate", "9M", "-bufsize", "18M", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     poster = None
     for n in range(total):

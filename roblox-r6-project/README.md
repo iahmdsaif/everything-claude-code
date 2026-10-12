@@ -4,7 +4,7 @@ Smooth, loop-perfect animations for the classic Roblox **R6** character, made in
 Blender, plus a Roblox Studio project that plays them. This is a separate project:
 it does not touch any other trailer or game folders.
 
-![preview](preview/preview_sheet.png)
+![DEADAIR trailer](trailer/DEADAIR_Trailer_poster.png)
 
 ## What's inside
 
@@ -13,12 +13,12 @@ it does not touch any other trailer or game folders.
 | `blender/R6_AnimPack.blend` | Open in Blender. R6 rig + 10 editable animations (Action Editor dropdown). |
 | `blender/r6_build.py` | Rebuilds the rig and every animation from scratch. |
 | `blender/r6_export_roblox.py` | Exports your (edited) Blender animations to Roblox files. |
-| `blender/render_preview.py` | Renders the 60 fps preview video. |
+| `blender/render_preview.py` | Renders a 60 fps preview reel of the animations (optional). |
 | `roblox/R6AnimPack.rbxl` | **Open in Roblox Studio** - test place with everything set up. |
 | `roblox/install/` | Two files to drop into your own game. |
 | `roblox/animations/` | The animations as Roblox KeyframeSequences (`.rbxmx`). |
 | `roblox/src/` | The Luau scripts (Animate, loader, config, gallery). |
-| `preview/R6_AnimPack_preview.mp4` | 60 fps preview of the animations. |
+| `trailer/` | The DEADAIR teaser: video, Blender scene, Roblox Studio version. |
 
 ### The animations
 
