@@ -43,6 +43,7 @@ SHOTS = [
     ("G", 25.5, 27.5),  # on the tower balcony, beacon pulsing
 ]
 SHOT_RANGE = {name: (a, b) for name, a, b in SHOTS}
+NO_MOTION_BLUR = {"F"}
 END_TIME = 34.5
 
 
@@ -259,6 +260,7 @@ class Town:
         self.beacon_mat2 = principled("Beacon Mid", (1, 0, 0), emit=(1.0, 0.05, 0.03), strength=60)
         cylinder("BeaconMid", 0.6, 0.8, (tx + 4.2, ty + 4.2, 50), self.beacon_mat2, col)
         self.beacon2 = point_light("BeaconLight2", (tx + 4.2, ty + 4.2, 50), (1.0, 0.06, 0.03), 9000, 0.6, col)
+        self.beacon2.data.volume_factor = 0.0  # close to the climb camera: no fog streaks
         for i, sx in enumerate((-1, 1)):
             flood = bpy.data.lights.new(f"Floodlight{i}", "SPOT")
             flood.energy = 60000
@@ -596,9 +598,9 @@ def camera_path(shot, t):
     if shot == "E":
         eye = Vector((-26.0, -181.0 - 3.0 * u, 8.0)) + handheld(t, 0.06)
         return eye, Vector((0.0, -181.0 - 5.0 * smooth(u), 10.5 - 4.5 * smooth(u))), 26
-    if shot == "F":
-        eye = Vector((-4.0, -215.0, 1.8)) + handheld(t, 0.05)
-        return eye, root + Vector((0.0, 0.0, 6.0 + 6.0 * u)), 24
+    if shot == "F":  # crane up with the climber, looking up past them at the tower
+        eye = Vector((-5.0, -214.0, 1.8 + 0.8 * (root.z - 2.0))) + handheld(t, 0.05)
+        return eye, root + Vector((0.0, 0.0, 6.0 + 2.0 * u)), 24
     if shot == "G":
         eye = Vector((14.0, -207.0 - 2 * u, 37.0))
         return eye, Vector((-1.0, -229.5, 46.0)), 38
@@ -711,6 +713,8 @@ def render(out, shots=None, single=None):
             continue
         scene.frame_start, scene.frame_end = frame(a), frame(b) - 1
         scene.frame_step = 2
+        # EEVEE smears bright lights into streaks while the camera cranes up in F.
+        scene.render.use_motion_blur = shot not in NO_MOTION_BLUR
         scene.render.filepath = os.path.join(out, "")
         bpy.ops.render.render(animation=True)
 
