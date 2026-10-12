@@ -15,7 +15,7 @@ local Enum = roblox.Enum
 
 local R6 = {}
 
-R6.ORDER = { "Idle", "IdleLook", "Walk", "Run", "Jump", "Fall", "Land", "Climb", "Sit", "ToolHold" }
+R6.ORDER = { "Idle", "IdleLook", "Walk", "Run", "Jump", "Fall", "Land", "Climb", "Sit", "ToolHold", "GetUp", "PickUp" }
 
 function R6.new(className: string, props: { [string]: any }, parent: any?)
 	local inst = Instance.new(className)

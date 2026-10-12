@@ -161,23 +161,36 @@ def add(*poses):
     return out
 
 
-def ground(pose, lift=0.0, softness=0.025):
+# Half sizes used for floor contact (the head mesh is ~1.25 studs, not its 2x1x1 part).
+CONTACT_HALF = {"Torso": (1.0, 1.0, 0.5), "Head": (0.62, 0.6, 0.62), "Right Arm": (0.5, 1.0, 0.5),
+                "Left Arm": (0.5, 1.0, 0.5), "Right Leg": (0.5, 1.0, 0.5), "Left Leg": (0.5, 1.0, 0.5)}
+
+
+def ground(pose, lift=0.0, softness=0.025, whole_body=False, exclude=()):
     """R6 has no knees, so feet can only be kept on the floor by moving the
     whole body. Raise/lower the torso so the lowest corner of either leg block
     touches the ground exactly (soft-min keeps the result smooth), then add
-    `lift` (>= 0) on top for flight phases."""
+    `lift` (>= 0) on top for flight phases. With whole_body=True every part
+    counts (lying down, kneeling, reaching to the floor)."""
     pose = {k: dict(v) for k, v in pose.items()}
     pose.setdefault("Torso", {})["bob"] = 0.0
     rots = pose_to_char(pose)
     r_torso, t_torso = rots["Torso"]
     heights = []
-    for leg in ("Right Leg", "Left Leg"):
-        pivot, centre = Vector(JOINTS[leg][1]), Vector(JOINTS[leg][2])
-        r_leg = rots[leg][0]
-        for cx in (-0.5, 0.5):
-            for cz in (-0.5, 0.5):
-                p = pivot + r_leg @ (centre - pivot + Vector((cx, -1.0, cz)))
-                heights.append((r_torso @ p + t_torso).y + TORSO_HEIGHT)
+    parts = [p for p in JOINTS if p not in exclude] if whole_body else ["Right Leg", "Left Leg"]
+    for part in parts:
+        pivot, centre = Vector(JOINTS[part][1]), Vector(JOINTS[part][2])
+        r_part = rots[part][0]
+        hx, hy, hz = CONTACT_HALF[part]
+        for cx in (-hx, hx):
+            for cy in ((-hy, hy) if whole_body else (-hy,)):
+                for cz in (-hz, hz):
+                    corner = Vector((cx, cy, cz))
+                    if part == "Torso":
+                        p = corner
+                    else:
+                        p = pivot + r_part @ (centre - pivot + corner)
+                    heights.append((r_torso @ p + t_torso).y + TORSO_HEIGHT)
     low = min(heights)
     soft_min = low - softness * math.log(sum(math.exp(-(h - low) / softness) for h in heights))
     pose["Torso"]["bob"] = -soft_min + lift
@@ -394,6 +407,78 @@ LAND_KEYS = [
 ]
 
 
+# Getting up: lying on the back -> sit up -> knees-forward crouch -> lunge -> stand.
+# Every key is grounded on the whole body so nothing sinks through the floor;
+# the head and arms trail the torso by a few frames for weight.
+def _gu(torso, head, ra, la, rl, ll):
+    return ground({"Torso": torso, "Head": head, "Right Arm": ra, "Left Arm": la,
+                   "Right Leg": rl, "Left Leg": ll}, softness=0.004, whole_body=True)
+
+
+GETUP_KEYS = [
+    (0, _gu(dict(lean=-90, tilt=2), dict(nod=-4, tilt=10, turn=8),
+            dict(swing=-2, spread=12), dict(swing=2, spread=9),
+            dict(swing=90, spread=5), dict(swing=88, spread=3))),
+    (20, _gu(dict(lean=-88, tilt=1), dict(nod=10, tilt=4, turn=3),
+             dict(swing=-6, spread=16), dict(swing=-4, spread=14),
+             dict(swing=90, spread=5), dict(swing=89, spread=3))),
+    (46, _gu(dict(lean=-22), dict(nod=6),
+             dict(swing=-38, spread=16), dict(swing=-36, spread=15),
+             dict(swing=88, spread=6), dict(swing=86, spread=5))),
+    (62, _gu(dict(lean=-4), dict(nod=-4),
+             dict(swing=-20, spread=12), dict(swing=-18, spread=12),
+             dict(swing=82, spread=7), dict(swing=80, spread=6))),
+    (84, _gu(dict(lean=34), dict(nod=-18),
+             dict(swing=48, spread=10), dict(swing=44, spread=12),
+             dict(swing=56, spread=6), dict(swing=40, spread=5))),
+    (104, _gu(dict(lean=30, tilt=-3), dict(nod=-14),
+              dict(swing=22, spread=14), dict(swing=18, spread=16),
+              dict(swing=34, spread=4), dict(swing=-34, spread=4))),
+    (124, _gu(dict(lean=9, tilt=-1), dict(nod=-4),
+              dict(swing=6, spread=8), dict(swing=5, spread=9),
+              dict(swing=10, spread=3), dict(swing=-9, spread=3))),
+    (150, idle(0)),
+]
+
+# Picking something up off the floor with the right hand, then a look at it.
+# R6 legs can't bend, so the body drops into a low lunge and bows deep over
+# the front leg to bring the hand down to the floor.
+def _pu(torso, head, ra, la, rl, ll):
+    return ground({"Torso": torso, "Head": head, "Right Arm": ra, "Left Arm": la,
+                   "Right Leg": rl, "Left Leg": ll}, softness=0.004, whole_body=True,
+                  exclude=("Right Arm", "Left Arm"))
+
+
+PICKUP_KEYS = [
+    (0, idle(0)),
+    (16, _pu(dict(lean=5, tilt=1), dict(nod=24, turn=-3),
+             dict(swing=4, spread=5), dict(swing=3, spread=5),
+             dict(swing=2, spread=2), dict(swing=-1, spread=2))),
+    (38, _pu(dict(lean=46, tilt=-3, turn=-6), dict(nod=0, turn=-2),
+             dict(swing=62, spread=5, twist=-5), dict(swing=26, spread=11),
+             dict(swing=36, spread=3), dict(swing=-33, spread=3))),
+    (54, _pu(dict(lean=72, tilt=-4, turn=-8), dict(nod=-10, turn=-3),
+             dict(swing=90, spread=4, twist=-8), dict(swing=48, spread=10),
+             dict(swing=58, spread=3), dict(swing=-58, spread=3))),
+    (66, _pu(dict(lean=71, tilt=-4, turn=-8), dict(nod=-9, turn=-3),
+             dict(swing=87, spread=3, twist=-12), dict(swing=47, spread=10),
+             dict(swing=58, spread=3), dict(swing=-58, spread=3))),
+    (82, _pu(dict(lean=44, tilt=-2, turn=-5), dict(nod=4, turn=-3),
+             dict(swing=64, spread=-2, twist=-18), dict(swing=22, spread=9),
+             dict(swing=38, spread=3), dict(swing=-34, spread=3))),
+    (100, _pu(dict(lean=12, tilt=-1, turn=-3), dict(nod=22, turn=-4),
+              dict(swing=56, spread=-4, twist=-22), dict(swing=10, spread=7),
+              dict(swing=12, spread=3), dict(swing=-8, spread=3))),
+    (118, _pu(dict(lean=2, turn=-2), dict(nod=16, tilt=6, turn=-6),
+              dict(swing=78, spread=-8, twist=-28), dict(swing=6, spread=6),
+              dict(swing=3, spread=2), dict(swing=-2, spread=2))),
+    (134, _pu(dict(lean=2, turn=-1), dict(nod=14, tilt=8, turn=-8),
+              dict(swing=80, spread=-9, twist=-30), dict(swing=5, spread=6),
+              dict(swing=2, spread=2), dict(swing=-2, spread=2))),
+    (164, idle(0)),
+]
+
+
 # name, frames, loop, key step, handles, Roblox priority, bake step,
 # source (function of seconds, or key list), exported joints, stride (studs/cycle)
 ANIMS = [
@@ -417,6 +502,10 @@ ANIMS = [
          bake=2, source=sit),
     dict(name="ToolHold", frames=240, loop=True, step=20, handles="AUTO", priority="Movement",
          bake=2, source=tool_hold, joints=["Right Arm"]),
+    dict(name="GetUp", frames=150, loop=False, step=None, handles="AUTO_CLAMPED",
+         priority="Action", bake=1, source=GETUP_KEYS),
+    dict(name="PickUp", frames=164, loop=False, step=None, handles="AUTO_CLAMPED",
+         priority="Action", bake=1, source=PICKUP_KEYS),
 ]
 
 

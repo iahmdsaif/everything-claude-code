@@ -18,6 +18,8 @@ return {
 		Climb = "",
 		Sit = "",
 		ToolHold = "",
+		GetUp = "", -- one-shot: play it after a ragdoll / knockdown
+		PickUp = "", -- one-shot: play it when the player grabs an item
 	},
 
 	-- Roblox's stock R6 animations, used for anything without an id outside Studio.

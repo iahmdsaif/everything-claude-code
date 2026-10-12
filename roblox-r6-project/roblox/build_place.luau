@@ -21,7 +21,7 @@ local Color3 = roblox.Color3
 local Enum = roblox.Enum
 
 local ORDER = R6.ORDER
-local ONE_SHOT = { Jump = true, Land = true }
+local ONE_SHOT = { Jump = true, Land = true, GetUp = true, PickUp = true }
 local new = R6.new
 local makeR6 = R6.makeRig
 
