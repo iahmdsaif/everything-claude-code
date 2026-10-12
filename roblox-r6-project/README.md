@@ -107,6 +107,39 @@ tab. It only replaces the `R6 AnimPack` collection and the `R6_*` actions.
   Walk and run play phase-locked and speed up or slow down with your real ground
   speed, so feet don't skate.
 
+## Trailer: DEADAIR teaser
+
+`trailer/DEADAIR_Trailer.mp4` is a 34-second teaser made with this pack: a foggy,
+blocky town at night, a dead radio signal, and the R6 character walking, running,
+jumping and climbing a radio tower with a flashlight. It ends on dead silence.
+The concept is my own take on the name "Deadair", because I couldn't see the
+game's files. All the wording is easy to change (see below).
+
+| File | What it is |
+| --- | --- |
+| `trailer/DEADAIR_Trailer.blend` | The whole scene: town, tower, lights, character, one camera per shot. |
+| `trailer/deadair_trailer.py` | Builds that scene from scratch and renders the shots. |
+| `trailer/make_audio.py` | Makes the soundtrack (static, drone, footsteps on the real foot contacts, impacts, riser). |
+| `trailer/assemble.py` | Adds titles, glitch cuts, grain and sound, and writes the final `.mp4`. |
+
+**Change the title or text:** edit `TITLE`, `SUBTITLE` and `CAPTIONS` at the top of
+`trailer/assemble.py`, then run it again. No re-rendering is needed:
+
+```bash
+python3 make_audio.py audio.wav
+python3 assemble.py frames/ audio.wav DEADAIR_Trailer.mp4
+```
+
+**Re-render the shots** (for example after changing the town or cameras), either in
+Blender with **Render -> Render Animation** on `DEADAIR_Trailer.blend` (set the output
+folder first), or from a terminal:
+
+```bash
+blender -b DEADAIR_Trailer.blend --python deadair_trailer.py -- --render frames/
+```
+
+Needs Python 3 with `numpy` and `Pillow`, plus `ffmpeg`.
+
 ## Settings you can tweak
 
 Everything is in `ReplicatedStorage -> R6AnimPack -> Config`: walk/run blend
